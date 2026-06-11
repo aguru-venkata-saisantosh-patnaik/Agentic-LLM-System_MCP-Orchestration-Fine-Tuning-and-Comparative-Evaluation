@@ -4,6 +4,18 @@ Real problems encountered and how they were solved, phase by phase.
 
 ---
 
+## Cross-Cutting — API Availability
+
+**Problem: No usable free API existed for real flight pricing in India.**  
+The original design called for live flight price data to make the optimizer's transit cost analysis credible. Several APIs were evaluated: Amadeus (sandbox expired, production requires paid account and business verification), Skyscanner (partner API only, not available to individual developers), Google Flights (no public API), Kiwi.com (paid only). None had a free tier with usable rate limits for 500+ agent runs.  
+**Fix:** Replaced live flight pricing with a haversine-based cost estimator: straight-line distance between city coordinates × a per-km rail/bus rate from `config.BUDGET_TIERS`. This is a heuristic, not real pricing, but it's internally consistent and reproducible. The limitation is documented in the model cards.
+
+**Problem: Several external APIs had rate limits too low for batch agent runs.**  
+With 500 traces, each involving 3–5 API calls per agent across 4 agents, the pipeline needed ~6,000–10,000 external API calls. Most free tiers (Overpass, ORS, DuckDuckGo) have limits designed for interactive use, not batch workloads.  
+**Fix:** Implemented `@api_cache(ttl=86400)` in every MCP server (`utils/cache.py`, backed by `diskcache`). The 20-city travel network has only ~380 unique city pairs — caching collapses thousands of runs to ~40 unique Overpass/ORS calls. DuckDuckGo was used for web search (no key, no hard rate limit) instead of Tavily or Brave Search (both required paid plans for batch use).
+
+---
+
 ## Phase 1 — Synthetic Data Generation
 
 **Problem: GPT-4o-mini hallucinated prices outside budget tiers.**  
@@ -18,9 +30,9 @@ Generating 5,000 records at ~1.5 req/s takes hours. A crash mid-run would waste 
 
 ## Phase 2 — Multi-Agent System
 
-**Problem: Amadeus Flight API required a paid production key after the sandbox expired.**  
-The original design used Amadeus for real flight pricing. Sandbox tokens have a 30-day TTL and free-tier quotas that expire without warning.  
-**Fix:** Replaced Amadeus entirely with Overpass API (OpenStreetMap) for hotel and POI data, and with a haversine + mode-of-transport heuristic for transit cost estimation. No API key required. This turned a $0 sandbox into a genuinely free, rate-limit-free data source.
+**Problem: No free flight pricing API was available for Indian domestic routes.**  
+The original design required live flight prices to make the transit cost analysis credible. After evaluating several options, none offered a usable free tier for batch agent runs (see the API Availability section above).  
+**Fix:** Replaced live pricing with a haversine distance estimator: straight-line km between city coordinates × a per-km fare rate derived from `config.BUDGET_TIERS`. Hotels and POIs use Overpass API (OpenStreetMap) — no key required, no rate limits, and good coverage of Indian cities.
 
 **Problem: DeepSeek's function-calling schema differs slightly from OpenAI's spec.**  
 The MCP adapter was written for OpenAI tool-call format. DeepSeek returns `tool_calls` in the same structure but occasionally omits the `id` field or nests arguments differently.  
@@ -37,6 +49,10 @@ About 8% of traces had malformed tool call sequences where the agent repeated th
 ---
 
 ## Phase 3 — SLM Training
+
+**Problem: Colab T4 kept crashing mid-training for distill and curriculum.**  
+The T4 runtime on Colab free tier has a 12-hour session limit and gets reclaimed without warning when Google detects low activity or high memory pressure. Training `tripmind-distill` and `tripmind-curriculum` (which require seq_len=16384 for the long agent trace sequences) would OOM or disconnect mid-epoch, losing all progress.  
+**Fix:** Moved distill and curriculum training to Lightning.ai A100 (40GB VRAM), which has a stable 3-hour free compute session without surprise reclamation. The ft model (shorter sequences, seq_len=512) stayed on Colab T4 and completed without issues. Each notebook saves a LoRA checkpoint to Google Drive / Lightning studio storage after every epoch, so a crash at epoch 3 of 5 means only one epoch is re-run.
 
 **Problem: Colab T4 OOM with seq_len=512 and batch_size=4.**  
 The initial training config mirrored Phase 2's seq_len=16384 (designed for A100). The T4 has 15GB VRAM — it OOM'd immediately.  

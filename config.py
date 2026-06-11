@@ -97,13 +97,13 @@ MCP_SERVERS: dict[str, str] = {
 }
 
 # ─── Models ───────────────────────────────────────────────────────────────────
-DEEPSEEK_AGENT_MODEL = "deepseek-chat"           # Phase 2 agents — 5M free tokens, then $0.14/$0.28
+DEEPSEEK_AGENT_MODEL = "deepseek-chat"           # Phase 2 agents — DeepSeek V4 Flash (paid, $4 for 500 traces)
 DEEPSEEK_BASE_URL    = "https://api.deepseek.com"
 
 # ── Active Phase 2 LLM provider ──────────────────────────────────────────────
 # Switch this to change the LLM used by all three agents.
-# "deepseek" → needs DEEPSEEK_API_KEY (balance required)
-# "groq"     → needs GROQ_API_KEY     (completely free, ~12 hrs for 500 records)
+# "deepseek" → needs DEEPSEEK_API_KEY (paid — used deepseek-chat / DeepSeek V4 Flash)
+# "groq"     → needs GROQ_API_KEY     (free tier, ~12 hrs for 500 records)
 # "openai"   → needs OPENAI_API_KEY   ($1.71 for 500 records on gpt-4.1-nano)
 PHASE2_PROVIDER = "deepseek"   # ← change this to switch providers
 GEMINI_MODEL        = "gemini-2.0-flash"        # Phase 1 data gen (generate.py)

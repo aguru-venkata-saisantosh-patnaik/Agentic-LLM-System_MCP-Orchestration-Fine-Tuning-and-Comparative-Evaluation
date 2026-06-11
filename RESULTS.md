@@ -21,18 +21,22 @@ The 5,000 / 500 split was a deliberate budget-parity decision. GPT-4o-mini produ
 
 ## Results (92 golden test cases × 4 models)
 
-| Metric | Target | baseline | tripmind-ft | tripmind-distill | tripmind-curriculum |
-|--------|--------|:--------:|:-----------:|:----------------:|:-------------------:|
-| JSON valid | 85% | 0.0% ✗ | **100%** ✓ | 92.4% ✓ | 10.9% ✗ |
-| Savings found | 70% | — ✗ | **100%** ✓ | 98.1% ✓ | — ✗ |
-| Budget compliance | 80% | — ✗ | **98.7%** ✓ | — | — |
-| Schema compliance | 80% | 0.0% ✗ | **83.7%** ✓ | 0.0% ✗ | 0.0% ✗ |
-| Intent alignment | 55% | — | 32.2% ✗ | — | 41.8% ✗ |
-| ROUGE-L vs teacher | 25% | 12.6% ✗ | **43.6%** ✓ | 8.9% ✗ | 12.7% ✗ |
-| BERTScore F1 | 70% | 80.5% ✓ | **93.2%** ✓ | 73.8% ✓ | 73.4% ✓ |
-| Reasoning coherence | 65% | — | **72.3%** ✓ | 67.4% ✓ | 47.0% ✗ |
-| Grounding accuracy | 60% | — | 89.5% ✓ | 44.2% ✗ | **88.0%** ✓ |
-| Red-team pass | 80% | — | 53.3% ✗ | 46.7% ✗ | **60.0%** ✗ |
+| Metric | baseline | tripmind-ft | tripmind-distill | tripmind-curriculum |
+|--------|:--------:|:-----------:|:----------------:|:-------------------:|
+| JSON valid | 0.0% | **100%** | 92.4% | 10.9% |
+| Savings found | — | **100%** | 98.1% | — |
+| Budget compliance | — | **98.7%** | — | — |
+| Schema compliance | 0.0% | **83.7%** | 0.0% | 0.0% |
+| Intent alignment | — | 32.2% | — | 41.8% |
+| ROUGE-L | 12.6% | **43.6%** | 8.9% | 12.7% |
+| BERTScore F1 | 80.5%† | **93.2%** | 73.8% | 73.4% |
+| Reasoning coherence | — | **72.3%** | 67.4% | 47.0% |
+| Grounding accuracy | —‡ | **89.5%** | 44.2% | **88.0%** |
+| Red-team pass | —§ | 53.3% | 46.7% | **60.0%** |
+
+† BERTScore is high for baseline despite 0% JSON validity — semantic embedding overlap is not a reliable signal for structured-output tasks.  
+‡ Grounding accuracy requires the LLM judge on parsed output — not computed for baseline due to 0% JSON validity.  
+§ Red-team adversarial prompts were not run on baseline — with 0% JSON validity, structured safety metrics are not interpretable.
 
 ### Head-to-head win rates (same 92 records, LLM judge)
 
@@ -72,7 +76,7 @@ All three models scored well below the 0.55 intent alignment target. This metric
 
 ---
 
-## What I'd Do Differently
+## What Would Come Next
 
 **Fix curriculum JSON:** Use grammar-constrained decoding (llama.cpp's `--grammar` flag or Outlines) during curriculum Phase 2, or add a JSON-only fine-tuning warmup after Phase 2 completes.
 

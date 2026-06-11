@@ -1,4 +1,4 @@
-# Phase 2 — Multi-Agent Orchestration ✅ COMPLETE
+# Phase 2 — Multi-Agent Orchestration
 
 Runs a 3-agent pipeline (Analyst → Concierge → Optimizer) over Phase 1 personas using real MCP tool servers. Produces grounded reasoning traces used as the distillation training signal for Phase 3.
 
@@ -12,7 +12,7 @@ Runs a 3-agent pipeline (Analyst → Concierge → Optimizer) over Phase 1 perso
 | Avg savings | 20.0% |
 | Savings range | 3% – 94% |
 | Unique personas covered | 500 |
-| Agent LLM | DeepSeek (`deepseek-chat`) |
+| Agent LLM | DeepSeek V4 Flash (`deepseek-chat`) |
 | Avg API calls per trace | ~2,900 |
 
 ---
@@ -50,7 +50,7 @@ All 4 servers implement the official `mcp` Python library (SSE transport on loca
 | `overpass_server.py` | 8003 | Overpass API (OSM) | `search_pois`, `search_restaurants` |
 | `search_server.py` | 8004 | DuckDuckGo | `web_search` |
 
-> **Note**: `hotels_server.py` was originally named `amadeus_server.py`. It does not use the Amadeus API — it uses Overpass for real OSM hotel data and a haversine formula for flight cost estimates.
+> `hotels_server.py` uses Overpass (OSM) for real hotel data and a haversine formula for flight cost estimates. No external API key required.
 
 ---
 
@@ -129,13 +129,13 @@ Filtering is applied by `phase3_training/prepare_distill.py` before training.
 
 ## Key Design Decisions
 
-**Why DeepSeek?** OpenAI-compatible API, strong function-calling support, 5M free tokens. Switched from Gemini 2.0 Flash mid-project because Gemini's function-calling schema (using `google.genai types`) was tightly coupled — DeepSeek uses the standard OpenAI tool format, making the codebase provider-agnostic.
+**Why DeepSeek V4 Flash?** OpenAI-compatible API, strong function-calling support, and cost $4 for 500 multi-agent traces — exactly matching the Phase 1 GPT-4o-mini budget so the fine-tune vs. distill comparison is not confounded by data cost. Switched from Gemini 2.0 Flash mid-project because Gemini's function-calling schema was tightly coupled to the `google.genai` SDK — DeepSeek uses the standard OpenAI tool format, making the agent code provider-agnostic.
 
 **Why MCP over direct API calls?** MCP servers are reusable across agents, sessions, and tools (Claude Desktop, Claude Code, custom agents). The same 4 servers required for Phase 2 can be reused in Phase 5 UI for live itinerary grounding.
 
 **Why cache MCP responses?** Routing queries between the same 20 cities repeat constantly. `@api_cache(ttl=86400)` in each server collapses thousands of runs to ~40 unique Overpass/ORS calls per day — well within all free tier limits.
 
-**Why not Amadeus for hotels?** Amadeus sandbox requires account approval and has strict rate limits. Overpass API gives real hotel names, star ratings, and addresses from OpenStreetMap — no API key needed, unlimited queries, and more reliable for Indian cities.
+**Why Overpass for hotels?** Overpass API (OpenStreetMap) provides real hotel names, star ratings, and addresses — no API key needed, no rate limits, and comprehensive coverage of Indian cities. Several flight pricing APIs were evaluated but all required paid plans or had rate limits too low for 500 concurrent agent runs.
 
 ---
 

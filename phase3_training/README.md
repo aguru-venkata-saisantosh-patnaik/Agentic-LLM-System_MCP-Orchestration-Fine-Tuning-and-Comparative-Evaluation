@@ -1,6 +1,6 @@
-# Phase 3 — SLM Training ✅ COMPLETE
+# Phase 3 — LLM Fine-Tuning
 
-Trains and compares three SLMs on Llama 3.1 8B using QLoRA (Unsloth). Tests which training approach produces the best travel optimizer.
+Fine-tunes three Llama 3.1 8B LLMs using QLoRA (Unsloth). Tests which training approach produces the best travel optimizer.
 
 ## The Research Question
 
@@ -14,7 +14,7 @@ Three models, same base, different training signals:
 | `tripmind-distill` | Phase 2 — 449 traces | Single SFT run | 5 | 2e-4 | Lightning.ai A100 (bf16) | 0.254 |
 | `tripmind-curriculum` | Phase 1 → Phase 2 | Two-stage SFT, same model | 2+3 | 2e-4→5e-5 | Lightning.ai A100 (bf16) | 0.241 / 0.505 |
 
-**Base model**: `unsloth/Meta-Llama-3.1-8B-bnb-4bit`  
+**Base model**: `unsloth/Meta-Llama-3.1-8B-bnb-4bit` (8B parameter LLM, quantized 4-bit for training)  
 **QLoRA config**: r=8, lora_alpha=16, load_in_4bit=True, gradient_checkpointing=unsloth  
 **ft**: Colab T4 (15GB VRAM, fp16, seq_len=512)  
 **distill + curriculum**: Lightning.ai A100 (40GB VRAM, bf16, seq_len=16384)

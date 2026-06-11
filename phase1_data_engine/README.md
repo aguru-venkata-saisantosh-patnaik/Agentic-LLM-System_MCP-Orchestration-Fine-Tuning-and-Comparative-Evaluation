@@ -1,4 +1,4 @@
-# Phase 1 — Synthetic Data Engine ✅ COMPLETE
+# Phase 1 — Synthetic Data Engine
 
 Generates ground-truth training data: validated `(baseline, optimized)` itinerary pairs across 20 Indian cities, 5 budget tiers, 5 trip types, and 8 intent categories.
 
@@ -95,11 +95,11 @@ wc -l data/synthetic/v2_20260608_085742.jsonl
 
 ## Key Design Decisions
 
-**Why gpt-4o-mini?** Reliable JSON output, fast, low cost (~$1.50 for 5k records). Gemini was tested first but had higher failure rates on structured output before `response_mime_type` support.
+**Why gpt-4o-mini?** Reliable JSON output, fast, and cost $4 for 5,000 records — exactly matching the Phase 2 DeepSeek budget to keep the fine-tune vs. distill comparison methodologically fair. Gemini was tested first but had higher failure rates on structured output before `response_mime_type` support.
 
 **Why inject cost bounds into the prompt?** v1 only gave the tier name — the LLM inferred the INR range itself, causing 60%+ failures. Injecting `min_daily` and `max_daily` from `config.BUDGET_TIERS` directly into the prompt dropped failures to near zero.
 
-**Why 5 budget tiers aligned to API fields?** `hotel_stars` matches Amadeus `hotelCategory` (1–5) and `price_level` matches OSM `price_level` (0–4). Phase 2 agents can filter APIs directly using `config.BUDGET_TIERS[tier]["hotel_stars"]` without any mapping layer.
+**Why 5 budget tiers?** `hotel_stars` (1–5) maps directly to Overpass OSM hotel quality filters and `price_level` (0–4) maps to OSM restaurant filters. Phase 2 agents use `config.BUDGET_TIERS[tier]["hotel_stars"]` directly without any translation layer.
 
 ---
 

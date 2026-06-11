@@ -16,7 +16,7 @@ Built for Indian domestic travel. Trains three Llama 3.1 8B SLMs via different s
 | 2 | Multi-agent orchestration + MCP servers (500 traces, DeepSeek) | ✅ Complete |
 | 3 | Three SLMs trained — Colab T4 (ft) + Lightning.ai A100 (distill, curriculum) | ✅ Complete |
 | 4 | Evaluation suite + red teaming (92 test cases × 3 trained + 1 baseline + 45 red team) | ✅ Complete |
-| 5 | FastAPI inference server — REST endpoints for all 4 models | 🔲 In Progress |
+| 5 | FastAPI inference server — REST endpoints for all 4 models | ✅ Complete |
 
 ---
 
@@ -25,7 +25,7 @@ Built for Indian domestic travel. Trains three Llama 3.1 8B SLMs via different s
 | Component | Technology | Cost |
 |-----------|-----------|------|
 | Phase 1 teacher | OpenAI gpt-4o-mini | **$4.00** — 5,000 synthetic pairs |
-| Phase 2 agent LLM | DeepSeek (`deepseek-chat`) | **$4.00** — 500 agent traces (matched Phase 1 budget for a fair comparison) |
+| Phase 2 agent LLM | DeepSeek V4 Flash (`deepseek-chat`) | **$4.00** — 500 agent traces (matched Phase 1 budget for a fair comparison) |
 | Phase 4 eval judge | Gemini 2.0 Flash (AI Studio) | Free (1M tokens/day) |
 | SLM base model | Llama 3.1 8B (Unsloth + QLoRA r=8) | Free |
 | SLM training (ft) | Google Colab T4, fp16, seq_len=512 | Free |
@@ -35,7 +35,7 @@ Built for Indian domestic travel. Trains three Llama 3.1 8B SLMs via different s
 | Hotels / Flights | Overpass API (OSM) + haversine | Free |
 | POIs / Restaurants | Overpass API (OSM) | Free |
 | Web search | duckduckgo-search library | Free |
-| Intent alignment | sentence-transformers (local) | Free |
+| Intent alignment | sentence-transformers `all-MiniLM-L6-v2` (local) | Free |
 | Inference API | FastAPI + Uvicorn | Free |
 
 ---
@@ -144,18 +144,18 @@ HuggingFace backups (LoRA adapters + GGUF):
 
 92 test cases × 4 models (3 trained + untuned baseline) + 45 adversarial red-team prompts. Full narrative: [`RESULTS.md`](RESULTS.md).
 
-| Metric | Target | baseline | tripmind-ft | tripmind-distill | tripmind-curriculum |
-|--------|:------:|:--------:|:-----------:|:----------------:|:-------------------:|
-| JSON valid | 85% | 0.0% ✗ | **100%** ✓ | 92.4% ✓ | 10.9% ✗ |
-| Savings found | 70% | — ✗ | **100%** ✓ | 98.1% ✓ | — |
-| Budget compliance | 80% | — ✗ | **98.7%** ✓ | — | — |
-| Schema compliance | 80% | 0.0% ✗ | **83.7%** ✓ | 0.0% ✗ | 0.0% ✗ |
-| ROUGE-L | 25% | 12.6% ✗ | **43.6%** ✓ | 8.9% ✗ | 12.7% ✗ |
-| BERTScore F1 | 70% | 80.5%\* ✓ | **93.2%** ✓ | 73.8% ✓ | 73.4% ✓ |
-| Grounding accuracy | 60% | — | 89.5% ✓ | 44.2% ✗ | **88.0%** ✓ |
-| Red-team pass | 80% | — | 53.3% ✗ | 46.7% ✗ | **60.0%** ✗ |
+| Metric | baseline | tripmind-ft | tripmind-distill | tripmind-curriculum |
+|--------|:--------:|:-----------:|:----------------:|:-------------------:|
+| JSON valid | 0.0% | **100%** | 92.4% | 10.9% |
+| Savings found | — | **100%** | 98.1% | — |
+| Budget compliance | — | **98.7%** | — | — |
+| Schema compliance | 0.0% | **83.7%** | 0.0% | 0.0% |
+| ROUGE-L | 12.6% | **43.6%** | 8.9% | 12.7% |
+| BERTScore F1 | 80.5%† | **93.2%** | 73.8% | 73.4% |
+| Grounding accuracy | — | **89.5%** | 44.2% | **88.0%** |
+| Red-team pass | — | 53.3% | 46.7% | **60.0%** |
 
-\* Baseline BERTScore passes the target despite 0% JSON validity — see RESULTS.md for why BERTScore is a weak signal for structured-output tasks.
+† Baseline BERTScore is high despite 0% JSON validity — natural language output is semantically similar to reference text. ROUGE-L (12.6%) correctly captures the structural gap. See [RESULTS.md](RESULTS.md) for the full analysis.
 
 **Head-to-head:** ft beats distill 78%, ft beats curriculum 57%.
 
