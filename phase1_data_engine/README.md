@@ -77,7 +77,7 @@ Three gates applied in order. Any failure → record discarded and logged to `lo
 
 ## How to Re-run or Extend
 
-Phase 1 is complete. Only re-run if you need more records.
+The canonical output file already exists. Only re-run if you need more records.
 
 ```bash
 # Checkpoint-safe — auto-skips already-generated records
@@ -95,7 +95,7 @@ wc -l data/synthetic/v2_20260608_085742.jsonl
 
 ## Key Design Decisions
 
-**Why gpt-4o-mini?** Reliable JSON output, fast, and cost $4 for 5,000 records — exactly matching the Phase 2 DeepSeek budget to keep the fine-tune vs. distill comparison methodologically fair. Gemini was tested first but had higher failure rates on structured output before `response_mime_type` support.
+**Why gpt-4o-mini?** Reliable structured JSON output, fast, and cost $4 for 5,000 records — exactly matching the Phase 2 DeepSeek budget to keep the fine-tune vs. distill comparison methodologically fair. OpenAI was the only provider that consistently hit <5% rejection rate on structured output without extra prompting.
 
 **Why inject cost bounds into the prompt?** v1 only gave the tier name — the LLM inferred the INR range itself, causing 60%+ failures. Injecting `min_daily` and `max_daily` from `config.BUDGET_TIERS` directly into the prompt dropped failures to near zero.
 

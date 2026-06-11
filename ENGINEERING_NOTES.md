@@ -7,7 +7,7 @@ Real problems encountered and how they were solved, phase by phase.
 ## Cross-Cutting — API Availability
 
 **Problem: No usable free API existed for real flight pricing in India.**  
-The original design called for live flight price data to make the optimizer's transit cost analysis credible. Several APIs were evaluated: Amadeus (sandbox expired, production requires paid account and business verification), Skyscanner (partner API only, not available to individual developers), Google Flights (no public API), Kiwi.com (paid only). None had a free tier with usable rate limits for 500+ agent runs.  
+The original design called for live flight price data to make the optimizer's transit cost analysis credible. Several flight pricing APIs were evaluated — all required paid accounts, partner-level access, or had rate limits too low for batch agent runs. None provided a usable free tier for 500+ concurrent agent traces. None had a free tier with usable rate limits for 500+ agent runs.  
 **Fix:** Replaced live flight pricing with a haversine-based cost estimator: straight-line distance between city coordinates × a per-km rail/bus rate from `config.BUDGET_TIERS`. This is a heuristic, not real pricing, but it's internally consistent and reproducible. The limitation is documented in the model cards.
 
 **Problem: Several external APIs had rate limits too low for batch agent runs.**  
@@ -51,8 +51,8 @@ About 8% of traces had malformed tool call sequences where the agent repeated th
 ## Phase 3 — SLM Training
 
 **Problem: Colab T4 kept crashing mid-training for distill and curriculum.**  
-The T4 runtime on Colab free tier has a 12-hour session limit and gets reclaimed without warning when Google detects low activity or high memory pressure. Training `tripmind-distill` and `tripmind-curriculum` (which require seq_len=16384 for the long agent trace sequences) would OOM or disconnect mid-epoch, losing all progress.  
-**Fix:** Moved distill and curriculum training to Lightning.ai A100 (40GB VRAM), which has a stable 3-hour free compute session without surprise reclamation. The ft model (shorter sequences, seq_len=512) stayed on Colab T4 and completed without issues. Each notebook saves a LoRA checkpoint to Google Drive / Lightning studio storage after every epoch, so a crash at epoch 3 of 5 means only one epoch is re-run.
+The T4 runtime on Colab free tier has a 12-hour session limit and gets reclaimed without warning when the platform detects low activity or high memory pressure. Training `tripmind-distill` and `tripmind-curriculum` (which require seq_len=16384 for the long agent trace sequences) would OOM or disconnect mid-epoch, losing all progress.  
+**Fix:** Moved distill and curriculum training to Lightning.ai A100 (40GB VRAM), which has a stable 3-hour free compute session without surprise reclamation. The ft model (shorter sequences, seq_len=512) stayed on Colab T4 and completed without issues. Each notebook saves a LoRA checkpoint to Colab Drive / Lightning studio storage after every epoch, so a crash at epoch 3 of 5 means only one epoch is re-run.
 
 **Problem: Colab T4 OOM with seq_len=512 and batch_size=4.**  
 The initial training config mirrored Phase 2's seq_len=16384 (designed for A100). The T4 has 15GB VRAM — it OOM'd immediately.  
@@ -70,9 +70,9 @@ HuggingFace's standard export pipeline doesn't produce GGUF directly; `convert_h
 
 ## Phase 4 — Evaluation
 
-**Problem: Gemini 2.0 Flash rate-limited the judge calls mid-eval.**  
-The eval pipeline calls Gemini once per record per model for reasoning coherence and grounding accuracy. At 92 × 3 = 276 judge calls in rapid succession, Gemini's free tier returned 429s after ~80 calls.  
-**Fix:** Added a 2-second sleep between judge calls and a retry-with-backoff decorator in `phase4_evals/utils.py`. Total eval wall time increased from ~25 minutes to ~55 minutes but succeeded without errors.
+**Problem: DeepSeek V4 Flash rate-limited the judge calls mid-eval.**  
+The eval pipeline calls DeepSeek once per record per model for reasoning coherence and grounding accuracy. At 92 × 3 = 276 judge calls in rapid succession, the API returned 429s after ~80 calls.  
+**Fix:** Added a 1-second minimum interval between judge calls in `metrics.py` and a 24-hour cache (`@api_cache`) so re-runs are instant. Total eval wall time increased but all calls completed without errors.
 
 **Problem: BERTScore gave the untuned baseline a misleadingly high score.**  
 The baseline model (llama3.1:8b, 0% JSON validity) scored 0.805 BERTScore — above the 0.70 target — because natural language about Indian cities is semantically close to the reference JSON. This would have made the baseline look competitive if BERTScore were the only metric.  

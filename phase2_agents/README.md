@@ -129,7 +129,7 @@ Filtering is applied by `phase3_training/prepare_distill.py` before training.
 
 ## Key Design Decisions
 
-**Why DeepSeek V4 Flash?** OpenAI-compatible API, strong function-calling support, and cost $4 for 500 multi-agent traces — exactly matching the Phase 1 GPT-4o-mini budget so the fine-tune vs. distill comparison is not confounded by data cost. Switched from Gemini 2.0 Flash mid-project because Gemini's function-calling schema was tightly coupled to the `google.genai` SDK — DeepSeek uses the standard OpenAI tool format, making the agent code provider-agnostic.
+**Why DeepSeek V4 Flash?** OpenAI-compatible API, strong function-calling support, and cost $4 for 500 multi-agent traces — exactly matching the Phase 1 GPT-4o-mini budget so the fine-tune vs. distill comparison is not confounded by data cost. DeepSeek uses the standard OpenAI tool-calling format, making the agent code provider-agnostic and the same key is reused for Phase 4 eval judging.
 
 **Why MCP over direct API calls?** MCP servers are reusable across agents, sessions, and tools (Claude Desktop, Claude Code, custom agents). The same 4 servers required for Phase 2 can be reused in Phase 5 UI for live itinerary grounding.
 

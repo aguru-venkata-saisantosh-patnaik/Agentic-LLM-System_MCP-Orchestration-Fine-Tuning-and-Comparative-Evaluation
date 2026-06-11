@@ -97,7 +97,7 @@ MCP_SERVERS: dict[str, str] = {
 }
 
 # ─── Models ───────────────────────────────────────────────────────────────────
-DEEPSEEK_AGENT_MODEL = "deepseek-chat"           # Phase 2 agents — DeepSeek V4 Flash (paid, $4 for 500 traces)
+DEEPSEEK_AGENT_MODEL = "deepseek-chat"           # DeepSeek V4 Flash — Phase 2 agents + Phase 4 eval judge
 DEEPSEEK_BASE_URL    = "https://api.deepseek.com"
 
 # ── Active Phase 2 LLM provider ──────────────────────────────────────────────
@@ -106,7 +106,7 @@ DEEPSEEK_BASE_URL    = "https://api.deepseek.com"
 # "groq"     → needs GROQ_API_KEY     (free tier, ~12 hrs for 500 records)
 # "openai"   → needs OPENAI_API_KEY   ($1.71 for 500 records on gpt-4.1-nano)
 PHASE2_PROVIDER = "deepseek"   # ← change this to switch providers
-GEMINI_MODEL        = "gemini-2.0-flash"        # Phase 1 data gen (generate.py)
+GEMINI_MODEL        = "gemini-2.0-flash"        # Phase 1 optional provider (not used by default)
 GROQ_MODEL          = "llama-3.1-8b-instant"    # Phase 1 groq data gen
 OPENAI_MODEL        = "gpt-4o-mini"             # Phase 1: primary data gen (paid, fast)
 DEFAULT_PROVIDER    = "openai"                  # Phase 1 default provider

@@ -3,8 +3,8 @@ Single place to create the LLM client and pick the model.
 All three agents import from here — change PHASE2_PROVIDER in config.py to switch.
 
 Providers:
-  "deepseek" → DeepSeek (active) — 5M free tokens then ~$1.20 for 500 records
-  "groq"     → Groq (Llama 3.3 70B) — completely free, ~12h for 500 records
+  "deepseek" → DeepSeek V4 Flash (active) — paid, $4 for 500 multi-agent traces
+  "groq"     → Groq (Llama 3.3 70B) — free tier, ~12h for 500 records
 """
 
 import os

@@ -41,9 +41,9 @@ All datasets use **Alpaca format**:
 
 ---
 
-## Phase 3 is Complete
+## Trained Models
 
-GGUFs are already in `models/finetune/`, `models/distill/`, `models/curriculum/` (4.6GB each).  
+GGUFs are in `models/finetune/`, `models/distill/`, `models/curriculum/` (4.6 GB each).  
 HuggingFace repos: `agurusantosh/tripmind-ft-gguf`, `agurusantosh/tripmind-distill-gguf`, `agurusantosh/tripmind-curriculum-gguf`
 
 ### Register with Ollama (run once from project root)
@@ -68,14 +68,14 @@ Training platforms used:
 
 | Notebook | Platform | Time |
 |----------|----------|------|
-| `01_train_ft.ipynb` | Google Colab T4 | ~1.7 hrs |
+| `01_train_ft.ipynb` | Colab T4 | ~1.7 hrs |
 | `02_train_distill.ipynb` | Lightning.ai A100 (free 3hr) | ~8 min |
 | `03_train_curriculum.ipynb` | Lightning.ai A100 (free 3hr) | ~13 min |
 
 To re-run:
 1. `python phase3_training/verify_datasets.py` — validate all 6 files
 2. Zip project: `cd .. && zip -r tripmind.zip travel_project/ --exclude "*.gguf" --exclude "*.jsonl" --exclude ".cache/*"`
-3. Upload zip to Colab Drive (for 01) or Lightning.ai studio storage (for 02/03)
+3. Upload zip to Colab or Lightning studio storage (for 01) or Lightning.ai studio storage (for 02/03)
 4. Run notebook, then `ollama create` again with updated GGUF
 
 ---
@@ -88,7 +88,7 @@ Notebook 03 is mechanically different from the other two. It runs **two sequenti
 # Stage 1 — domain knowledge (Phase 1, lr=2e-4, 2 epochs)
 trainer_s1 = SFTTrainer(model=model, dataset=stage1_data, lr=2e-4, epochs=2)
 trainer_s1.train()
-model.save_pretrained("Drive/.../curriculum_stage1_lora")  # crash checkpoint
+model.save_pretrained("curriculum_stage1_lora")  # checkpoint saved to studio storage
 
 # Stage 2 — reasoning on top (Phase 2, lr=5e-5, 3 epochs)
 # Same model object — Stage 1 LoRA weights already in memory
@@ -123,16 +123,20 @@ python phase3_training/verify_datasets.py     # validates all 6 files
 | `tripmind-curriculum` S2 | 171 | 281s | 0.505 | 0.686 |
 
 **Notes:**
-- distill's higher absolute loss (0.429) reflects harder output space (5k-token reasoning chains vs structured JSON), not poor learning.
-- curriculum S2 higher than distill S2 loss by design — 4× lower LR deliberately slows adaptation to preserve S1 domain weights.
-- Phase 4 evals (against 100-record golden set) will determine empirical quality differences.
+- distill's higher absolute loss (0.429) reflects a harder output space (5k-token reasoning chains vs compact JSON), not poor learning.
+- curriculum S2 loss is higher than S1 by design — the 4× lower LR deliberately slows adaptation to prevent Stage 1 domain weights from being overwritten.
 
-## Expected Performance (theory — Phase 4 will confirm)
+## Actual Evaluation Results
+
+See [`RESULTS.md`](../RESULTS.md) and [`phase4_evals/README.md`](../phase4_evals/README.md) for the full 92-case benchmark. Key outcomes:
 
 | Metric | `tripmind-ft` | `tripmind-distill` | `tripmind-curriculum` |
-|--------|--------------|--------------------|-----------------------|
-| Intent alignment | ~72% | ~83% | ~94% |
-| Budget compliance | ~88% | ~76% | ~100% |
-| Reasoning coherence | ~65% | ~82% | ~97% |
-| JSON validity | ~91% | ~85% | ~97% |
-| **Aggregate** | **~77%** | **~81%** | **~85%** |
+|--------|:------------:|:------------------:|:---------------------:|
+| JSON valid | **100%** | 92.4% | 10.9% |
+| Savings found | **100%** | 98.1% | — |
+| Budget compliance | **98.7%** | — | — |
+| BERTScore F1 | **93.2%** | 73.8% | 73.4% |
+| Grounding accuracy | 89.5% | 44.2% | **88.0%** |
+| Red-team pass | 53.3% | 46.7% | **60.0%** |
+
+tripmind-ft dominates structural metrics. tripmind-curriculum matches ft on grounding despite near-zero JSON validity — the Phase 2 curriculum stage transferred real-world knowledge but disrupted structured output format.

@@ -26,8 +26,8 @@ Benchmarks all four models (3 fine-tuned + 1 untuned baseline) on 92 golden test
 | **ROUGE-L** | N-gram overlap with reference output — rewards format fidelity |
 | **BERTScore F1** | Semantic embedding similarity (DistilBERT) — rewards content accuracy |
 | **Intent alignment** | Cosine similarity between stated intents and itinerary activities via `all-MiniLM-L6-v2` |
-| **Reasoning coherence** | LLM judge (Gemini 2.0 Flash) — is the pivot explanation logical? |
-| **Grounding accuracy** | LLM judge (Gemini 2.0 Flash) — do the itinerary details reflect real Indian cities/costs? |
+| **Reasoning coherence** | LLM judge (DeepSeek V4 Flash) — is the pivot explanation logical? |
+| **Grounding accuracy** | LLM judge (DeepSeek V4 Flash) — do the itinerary details reflect real Indian cities/costs? |
 | **Red-team pass** | Does the model refuse to violate budget constraints under adversarial prompts? |
 
 ---

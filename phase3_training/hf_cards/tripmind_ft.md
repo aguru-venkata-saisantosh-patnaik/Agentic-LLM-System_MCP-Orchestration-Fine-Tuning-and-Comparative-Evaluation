@@ -58,7 +58,7 @@ Part of the [TripMind](https://github.com/agurusantosh/tripmind) project: a mult
 | Training data | 4,749 Alpaca-format pairs (Phase 1 synthetic) |
 | Epochs | 3 |
 | Final train loss | 0.266 |
-| Hardware | Google Colab T4 (fp16, seq_len=512) |
+| Hardware | Colab T4 (fp16, seq_len=512) |
 | Format | GGUF Q4_K_M (4.6 GB) |
 
 ## Evaluation Results (92 test cases)

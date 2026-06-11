@@ -3,15 +3,15 @@
 ## Project Summary
 Autonomous multi-agent AI travel optimizer. Finds Price-Pivot Points (transit, accommodation, activity substitutions that save ≥5%) for Indian domestic travel.
 
-## Current Status
-| Phase | Status | Key Output |
-|-------|--------|-----------|
-| Phase 0 — Repo scaffold | ✅ Complete | Clean folder structure, shared utils |
-| Phase 1 — Synthetic data | ✅ Complete | 5,000 validated records |
-| Phase 2 — MCP servers + agents | ✅ Complete | 500 quality agent traces |
-| Phase 3 — SLM training (3 models) | ✅ Complete | 3× 4.6GB GGUFs in models/ + HuggingFace backups |
-| Phase 4 — Evals + red team | ✅ Complete | 92-sample eval + 45 red team runs, summary JSON |
-| Phase 5 — FastAPI inference server | 🔲 In Progress | phase5_serving/ |
+## Phases
+| Phase | Key Output |
+|-------|-----------|
+| Phase 0 — Repo scaffold | Clean folder structure, shared utils |
+| Phase 1 — Synthetic data | 5,000 validated records |
+| Phase 2 — MCP servers + agents | 500 quality agent traces |
+| Phase 3 — SLM training (3 models) | 3× 4.6GB GGUFs in models/ + HuggingFace backups |
+| Phase 4 — Evals + red team | 92-sample eval + 45 red team runs, summary JSON |
+| Phase 5 — FastAPI inference server | phase5_serving/ — REST endpoints for all 4 models |
 
 ## Canonical Datasets
 | File | Records | Notes |
@@ -25,13 +25,12 @@ Autonomous multi-agent AI travel optimizer. Finds Price-Pivot Points (transit, a
 - **Phase 1**: Synthetic data generation (gpt-4o-mini → validated JSONL pairs)
 - **Phase 2**: Multi-agent system (Supervisor + 3 workers) using MCP tool servers + DeepSeek function calling
 - **Phase 3**: Three SLMs trained — fine-tuned (Colab T4, fp16), distilled (Lightning.ai A100, bf16), curriculum (A100, bf16). QLoRA r=8, Unsloth, GGUF Q4_K_M.
-- **Phase 4**: Eval suite + red team (Groq Llama judge, sentence-transformers for intent alignment). 92 golden test cases × 4 models + 45 red team adversarial runs.
+- **Phase 4**: Eval suite + red team (DeepSeek V4 Flash judge, sentence-transformers for intent alignment). 92 golden test cases × 4 models + 45 red team adversarial runs.
 - **Phase 5**: FastAPI inference server (`phase5_serving/`) — REST endpoints for all 4 models, eval results API
 
 ## APIs Used
-- OpenAI gpt-4o-mini — Phase 1 data generation (paid, complete)
-- DeepSeek (`deepseek-chat`) — Phase 2 agent orchestration (free tier)
-- Gemini 2.0 Flash (AI Studio) — Phase 4 eval judge (free, 1M tokens/day)
+- OpenAI gpt-4o-mini — Phase 1 data generation (paid, $4)
+- DeepSeek V4 Flash (`deepseek-chat`) — Phase 2 agent orchestration + Phase 4 eval judge (paid, $4)
 - OpenRouteService — routing/directions (free)
 - Overpass API (OSM) — hotels, POIs, restaurants (free)
 - duckduckgo-search — web search (free)
@@ -52,8 +51,8 @@ travel_project/
 │   ├── prepare_ft.py / prepare_distill.py / prepare_curriculum.py
 │   ├── verify_datasets.py
 │   └── notebooks/                   # 3 Colab notebooks + Ollama modelfiles
-├── phase4_evals/                    # eval suite (complete)
-├── phase5_serving/                  # FastAPI inference API (in progress)
+├── phase4_evals/                    # eval suite
+├── phase5_serving/                  # FastAPI inference API
 ├── data/
 │   ├── synthetic/                   # Phase 1 output
 │   ├── traces/                      # Phase 2 output (1 merged file)
