@@ -260,6 +260,18 @@ cp .env.example .env
 
 ---
 
+## Models on HuggingFace
+
+| Model | LoRA adapter | GGUF (Ollama-ready) |
+|-------|-------------|---------------------|
+| `tripmind-ft` | [agurusantosh/tripmind-ft-lora](https://huggingface.co/agurusantosh/tripmind-ft-lora) | [agurusantosh/tripmind-ft-gguf](https://huggingface.co/agurusantosh/tripmind-ft-gguf) |
+| `tripmind-distill` | [agurusantosh/tripmind-distill-lora](https://huggingface.co/agurusantosh/tripmind-distill-lora) | [agurusantosh/tripmind-distill-gguf](https://huggingface.co/agurusantosh/tripmind-distill-gguf) |
+| `tripmind-curriculum` | [agurusantosh/tripmind-curriculum-lora](https://huggingface.co/agurusantosh/tripmind-curriculum-lora) | [agurusantosh/tripmind-curriculum-gguf](https://huggingface.co/agurusantosh/tripmind-curriculum-gguf) |
+
+All GGUFs are Q4_K_M quantized (4.6 GB each) and run locally via Ollama — no GPU required.
+
+---
+
 ## Key Design Decisions
 
 **Why 5,000 synthetic pairs and 500 agent traces?** Budget parity. Both datasets cost exactly $4 — the comparison measures signal quality, not data scale.
