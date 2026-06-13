@@ -1,261 +1,213 @@
-"""Generate architecture diagram matching the existing chart dark theme."""
+"""Generate the TripMind architecture diagram in the same dark theme as the
+Phase 4 eval charts (results_analysis.ipynb). Pure matplotlib, headless."""
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.patches import FancyBboxPatch
-import matplotlib.patheffects as pe
 from pathlib import Path
 
-# ── Colour palette (matches results_analysis.ipynb) ──────────────────────────
-BG        = '#1a1a2e'
-BOX_BG    = '#16213e'
-SUBTLE_BG = '#1e2a4a'   # slightly lighter for inner boxes
-TEXT      = '#e0e0e0'
-DIM       = '#9ca3af'
+# ── Palette — identical to results_analysis.ipynb ────────────────────────────
+BG     = '#1a1a2e'   # page / figure
+CARD   = '#16213e'   # phase card (darker, matches axes.facecolor)
+INNER  = '#1f2a48'   # inner boxes (one step lighter than card)
+INNER2 = '#24345c'   # emphasised inner box
+TEXT   = '#e0e0e0'
+DIM    = '#9aa3b8'
 
-P1 = '#fb923c'   # orange
-P2 = '#4ade80'   # green
-P3 = '#c084fc'   # purple
-P4 = '#f87171'   # red / pink
-P5 = '#38bdf8'   # blue
+# Phase accent colours
+C1 = '#fb923c'   # orange  — data
+C2 = '#4ade80'   # green   — agents
+C3 = '#c084fc'   # purple  — training
+C4 = '#f87171'   # red     — eval
+C5 = '#38bdf8'   # blue    — serving
 
-ARROW = '#e0e0e0'   # thick inter-phase arrows
-SMALL = '#6b7280'   # thin inner arrows
+# Exact model colours from the eval charts (visual continuity with Phase 4)
+M_FT   = '#4fc3f7'
+M_DIST = '#81c784'
+M_CURR = '#ffb74d'
 
-# ── Figure setup ─────────────────────────────────────────────────────────────
-FW, FH = 14, 22
+ARROW = '#cdd3e0'   # thick inter-phase arrows
+THIN  = '#6b7280'   # thin inner arrows
+PILL  = '#243054'   # arrow-label pill fill
+
+# ── Canvas ───────────────────────────────────────────────────────────────────
+FW, FH = 14.0, 22.4
 fig, ax = plt.subplots(figsize=(FW, FH))
 fig.patch.set_facecolor(BG)
 ax.set_facecolor(BG)
 ax.set_xlim(0, FW)
 ax.set_ylim(0, FH)
+ax.set_aspect('equal')          # locks circles to true circles
 ax.axis('off')
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-def rbox(x, y, w, h, fc, ec, lw=1.5, radius=0.2, zorder=2):
-    p = FancyBboxPatch((x, y), w, h,
-                        boxstyle=f'round,pad=0,rounding_size={radius}',
-                        facecolor=fc, edgecolor=ec, linewidth=lw, zorder=zorder)
-    ax.add_patch(p)
-    return p
+# ── Drawing helpers ──────────────────────────────────────────────────────────
+def rbox(x, y, w, h, fc, ec, lw=1.5, r=0.18, z=2, ls='solid'):
+    ax.add_patch(FancyBboxPatch(
+        (x, y), w, h, boxstyle=f'round,pad=0,rounding_size={r}',
+        facecolor=fc, edgecolor=ec, linewidth=lw, linestyle=ls, zorder=z))
 
-def txt(x, y, s, size=10, color=TEXT, weight='normal', ha='center', va='center', zorder=5):
+def txt(x, y, s, size=10, color=TEXT, weight='normal', ha='center', va='center', z=5):
     ax.text(x, y, s, fontsize=size, color=color, fontweight=weight,
-            ha=ha, va=va, zorder=zorder, fontfamily='DejaVu Sans')
+            ha=ha, va=va, zorder=z, fontfamily='DejaVu Sans')
 
-def phase_frame(x, y, w, h, color, num, title):
-    """Draw phase outer box + coloured header band + numbered circle."""
-    rbox(x, y, w, h, BOX_BG, color, lw=2, radius=0.25, zorder=2)
-    # header band
-    rbox(x, y + h - 0.58, w, 0.58, color, color, lw=0, radius=0.25, zorder=3)
-    # fix bottom corners of header to be square
-    ax.add_patch(mpatches.Rectangle((x, y + h - 0.58), w, 0.25,
-                                     facecolor=color, edgecolor='none', zorder=3))
+def phase(x, y, w, h, color, num, title):
+    """Phase card: rounded body + rounded-top header band + number badge."""
+    hb = 0.62                                   # header band height
+    rbox(x, y, w, h, CARD, color, lw=2.0, r=0.26, z=2)
+    # header: full rounded box in accent, then square off its lower half
+    rbox(x, y + h - hb, w, hb, color, color, lw=0, r=0.26, z=3)
+    ax.add_patch(mpatches.Rectangle((x, y + h - hb), w, hb - 0.26,
+                                    facecolor=color, edgecolor='none', zorder=3))
+    # thin divider under the header for crispness
+    ax.plot([x, x + w], [y + h - hb, y + h - hb], color=BG, lw=1.2, zorder=4)
     # number badge
-    ax.add_patch(plt.Circle((x + 0.45, y + h - 0.29), 0.22,
-                              color='white', zorder=4))
-    txt(x + 0.45, y + h - 0.29, str(num), size=13, color=color, weight='bold', zorder=5)
-    txt(x + 0.82, y + h - 0.29, title, size=11, color='white', weight='bold',
-        ha='left', zorder=5)
+    cy = y + h - hb / 2
+    ax.add_patch(plt.Circle((x + 0.5, cy), 0.23, color='white', zorder=5))
+    txt(x + 0.5, cy, str(num), size=14, color=color, weight='bold', z=6)
+    txt(x + 0.92, cy, title, size=11.5, color='#0f1626', weight='bold', ha='left', z=6)
 
-def inner_box(x, y, w, h, color, title, lines=(), zorder=3):
-    rbox(x, y, w, h, SUBTLE_BG, color, lw=1.5, radius=0.18, zorder=zorder)
-    txt(x + w/2, y + h - 0.28, title, size=10.5, color=color, weight='bold', zorder=zorder+1)
-    for i, line in enumerate(lines):
-        txt(x + w/2, y + h - 0.58 - i * 0.30, line, size=8.5, color=DIM, zorder=zorder+1)
+def cell(x, y, w, h, ec, title, lines=(), fc=INNER, tcolor=None, lw=1.5, z=3):
+    rbox(x, y, w, h, fc, ec, lw=lw, r=0.16, z=z)
+    txt(x + w/2, y + h - 0.34, title, size=10.5, color=tcolor or ec, weight='bold', z=z+1)
+    for i, ln in enumerate(lines):
+        txt(x + w/2, y + h - 0.70 - i * 0.33, ln, size=8.7, color=DIM, z=z+1)
 
-def big_arrow(x1, y1, x2, y2, label=''):
-    ax.annotate('', xy=(x2, y2), xytext=(x1, y1),
-                arrowprops=dict(arrowstyle='->', color=ARROW,
-                                lw=3.5, mutation_scale=22))
-    if label:
-        mx, my = (x1+x2)/2, (y1+y2)/2
-        rbox(mx - len(label)*0.065, my - 0.18, len(label)*0.13, 0.36,
-             '#2a2a4a', '#3a3a5a', lw=1, radius=0.12, zorder=6)
-        txt(mx, my, label, size=9, color=TEXT, weight='bold', zorder=7)
+def big_arrow(xc, y_top, y_bot, label):
+    ax.annotate('', xy=(xc, y_bot), xytext=(xc, y_top),
+                arrowprops=dict(arrowstyle='-|>', color=ARROW, lw=3.6, mutation_scale=26))
+    pw = 0.165 * len(label) + 0.6
+    ph = 0.46
+    mx = xc + 0.25 + pw / 2
+    my = (y_top + y_bot) / 2
+    rbox(mx - pw/2, my - ph/2, pw, ph, PILL, '#46568a', lw=1.2, r=0.18, z=6)
+    txt(mx, my, label, size=9.3, color=TEXT, weight='bold', z=7)
 
-def small_arrow_h(x1, x2, y):
+def arr_h(x1, x2, y):
     ax.annotate('', xy=(x2, y), xytext=(x1, y),
-                arrowprops=dict(arrowstyle='->', color=SMALL, lw=1.5, mutation_scale=14))
+                arrowprops=dict(arrowstyle='-|>', color=THIN, lw=1.6, mutation_scale=15))
 
-def small_arrow_v(x, y1, y2):
+def arr_v(x, y1, y2):
     ax.annotate('', xy=(x, y2), xytext=(x, y1),
-                arrowprops=dict(arrowstyle='->', color=SMALL, lw=1.5, mutation_scale=14))
+                arrowprops=dict(arrowstyle='-|>', color=THIN, lw=1.6, mutation_scale=15))
 
-# ─────────────────────────────────────────────────────────────────────────────
-# TITLE
-# ─────────────────────────────────────────────────────────────────────────────
-txt(7, 21.5, 'TripMind — System Architecture', size=17, color=TEXT, weight='bold')
+# ── Title ────────────────────────────────────────────────────────────────────
+txt(7, 21.95, 'TripMind — System Architecture', size=18, color=TEXT, weight='bold')
+ax.plot([5.0, 9.0], [21.55, 21.55], color=C5, lw=2.4, zorder=4)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PHASE 1  (y=18.8 → 21.0)
-# ─────────────────────────────────────────────────────────────────────────────
-P1Y, P1H = 18.8, 2.2
-phase_frame(0.3, P1Y, 13.4, P1H, P1, 1, 'PHASE 1 — Synthetic Data Engine')
+# ═════════════════════════════════ PHASE 1 ═══════════════════════════════════
+Y, H = 18.95, 2.25
+phase(0.3, Y, 13.4, H, C1, 1, 'PHASE 1 — Synthetic Data Engine')
+cell(0.55, Y+0.2, 3.45, 1.45, C1, 'GPT-4o-mini',
+     ('teacher model · $4', '5,000 API calls', '20 cities · 5 budgets · 8 intents'))
+arr_h(4.0, 4.55, Y+0.92)
+cell(4.55, Y+0.2, 3.7, 1.45, C1, '3-Gate Validator',
+     ('hostel · savings ≥ 5%', 'budget bounds', '~12% rejection rate'))
+arr_h(8.25, 8.8, Y+0.92)
+cell(8.8, Y+0.2, 4.65, 1.45, C1, '5,000 Training Pairs',
+     ('(baseline, optimized) itineraries', 'pivot_analysis · Alpaca format', 'checkpoint-safe · auto-resume'))
 
-inner_box(0.5, P1Y+0.15, 3.4, 1.55, P1, 'GPT-4o-mini',
-          ('teacher model · $4', '5,000 API calls', '20 cities · 5 budgets · 8 intents'))
+big_arrow(7, Y, Y - 1.0, '5,000 training pairs')
 
-small_arrow_h(3.9, 4.5, P1Y + 0.95)
+# ═════════════════════════════════ PHASE 2 ═══════════════════════════════════
+Y, H = 13.3, 4.45
+phase(0.3, Y, 13.4, H, C2, 2,
+      'PHASE 2 — Multi-Agent Orchestration   ·   DeepSeek V4 Flash · $4 · 500 traces')
+txt(7, Y + H - 0.92, '4 MCP Servers — official mcp library · SSE transport · disk cache (ttl 86400s)',
+    size=8.8, color=DIM)
 
-inner_box(4.5, P1Y+0.15, 3.7, 1.55, P1, '3-Gate Validator',
-          ('hostel check', 'savings ≥ 5% · budget bounds', '~12% rejection rate'))
+mcp = [('routing_server :8001', 'get_route · geocode_city'),
+       ('hotels_server :8002',  'search_hotels · search_flights'),
+       ('overpass_server :8003', 'search_pois · restaurants'),
+       ('search_server :8004',  'web_search · DuckDuckGo')]
+my = Y + H - 1.92
+for i, (n, s) in enumerate(mcp):
+    bx = 0.55 + i * 3.27
+    rbox(bx, my, 3.0, 0.86, INNER, C2, lw=1.4, r=0.14, z=3)
+    txt(bx+1.5, my+0.56, n, size=9.4, color=C2, weight='bold', z=4)
+    txt(bx+1.5, my+0.26, s, size=8.0, color=DIM, z=4)
 
-small_arrow_h(8.2, 8.8, P1Y + 0.95)
-
-inner_box(8.8, P1Y+0.15, 4.7, 1.55, P1, '5,000 Training Pairs',
-          ('(baseline, optimized) itineraries', 'pivot_analysis · Alpaca format', 'checkpoint-safe · resume on crash'))
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Arrow 1 → 2
-# ─────────────────────────────────────────────────────────────────────────────
-big_arrow(7, P1Y, 7, P1Y - 1.05, '5,000 training pairs')
-
-# ─────────────────────────────────────────────────────────────────────────────
-# PHASE 2  (y=13.2 → 17.6)
-# ─────────────────────────────────────────────────────────────────────────────
-P2Y, P2H = 13.2, 4.4
-phase_frame(0.3, P2Y, 13.4, P2H, P2, 2,
-            'PHASE 2 — Multi-Agent Orchestration  (DeepSeek V4 Flash · $4 · 500 traces)')
-
-# MCP subtitle
-txt(7, P2Y + P2H - 0.82, '4 MCP Servers — official mcp library · SSE transport · disk cache ttl=86400s',
-    size=8.5, color=DIM)
-
-# 4 MCP server boxes
-mcp_y = P2Y + P2H - 1.75
-mcp_w = 3.0
-for i, (name, sub) in enumerate([
-    ('routing_server :8001', 'get_route · geocode_city'),
-    ('hotels_server :8002',  'search_hotels · search_flights'),
-    ('overpass_server :8003', 'search_pois · search_restaurants'),
-    ('search_server :8004',  'web_search (DuckDuckGo)'),
-]):
-    bx = 0.5 + i * 3.3
-    rbox(bx, mcp_y, 3.0, 0.9, SUBTLE_BG, P2, lw=1.5, radius=0.15, zorder=3)
-    txt(bx + 1.5, mcp_y + 0.62, name, size=9.5, color=P2, weight='bold', zorder=4)
-    txt(bx + 1.5, mcp_y + 0.28, sub, size=8, color=DIM, zorder=4)
-
-# down arrow to supervisor
-small_arrow_v(7, mcp_y, mcp_y - 0.45)
+arr_v(7, my, my - 0.42)
 
 # Supervisor dashed frame
-sup_y = P2Y + 0.18
-sup_h = mcp_y - 0.45 - sup_y
-ax.add_patch(mpatches.FancyBboxPatch((0.5, sup_y), 12.9, sup_h,
-             boxstyle='round,pad=0.05', facecolor='none',
-             edgecolor='#4ade8055', linewidth=1.5,
-             linestyle='--', zorder=3))
-txt(1.1, sup_y + sup_h - 0.22,
-    'Supervisor — async · concurrency=3 · checkpoint-resume · quality filter → 500 clean traces',
-    size=8, color=DIM, ha='left', zorder=4)
+sy = Y + 0.22
+sh = (my - 0.42) - sy
+ax.add_patch(FancyBboxPatch((0.55, sy), 12.9, sh, boxstyle='round,pad=0,rounding_size=0.16',
+             facecolor='none', edgecolor='#4ade8055', lw=1.5, linestyle=(0, (5, 3)), zorder=3))
+txt(0.85, sy + sh - 0.24,
+    'Supervisor — async · concurrency = 3 · checkpoint-resume · quality filter → 500 clean traces',
+    size=8.2, color=DIM, ha='left', z=4)
 
-# 3 Agent boxes
-ag_y = sup_y + 0.08
-ag_h = sup_h - 0.38
-aw = 3.9
-for i, (name, tools, out, note) in enumerate([
-    ('Analyst',   'get_route · search_hotels · search_flights', '→ cost_report',   'transit + hotel cost analysis'),
-    ('Concierge', 'search_pois · search_restaurants · web_search', '→ substitutions', 'POI + dining replacements'),
-    ('Optimizer', 'all tools → optimized itinerary + pivot_analysis', '→ 500 traces saved', 'final synthesis'),
-]):
-    bx = 0.6 + i * 4.35
-    rbox(bx, ag_y, aw, ag_h, SUBTLE_BG, P2, lw=1.5, radius=0.18, zorder=3)
-    txt(bx + aw/2, ag_y + ag_h - 0.28, name, size=11, color=P2, weight='bold', zorder=4)
-    txt(bx + aw/2, ag_y + ag_h - 0.62, tools, size=8, color=TEXT, zorder=4)
-    txt(bx + aw/2, ag_y + ag_h - 0.96, out, size=9, color=TEXT, weight='bold', zorder=4)
-    txt(bx + aw/2, ag_y + 0.22, note, size=8, color=DIM, zorder=4)
+agents = [('Analyst',   'get_route · search_hotels', 'search_flights', '→ cost_report', 'transit + hotel cost'),
+          ('Concierge', 'search_pois · restaurants', 'web_search', '→ substitutions', 'POI + dining swaps'),
+          ('Optimizer', 'all tools · final lookups', 'itinerary + pivot_analysis', '→ 500 traces saved', 'final synthesis')]
+ay = sy + 0.18
+ah = sh - 0.62
+aw = 3.95
+for i, (n, t1, t2, out, note) in enumerate(agents):
+    bx = 0.7 + i * 4.3
+    rbox(bx, ay, aw, ah, INNER, C2, lw=1.5, r=0.16, z=3)
+    txt(bx+aw/2, ay+ah-0.32, n, size=11.5, color=C2, weight='bold', z=4)
+    txt(bx+aw/2, ay+ah-0.70, t1, size=8.2, color=TEXT, z=4)
+    txt(bx+aw/2, ay+ah-1.00, t2, size=8.2, color=TEXT, z=4)
+    txt(bx+aw/2, ay+ah-1.34, out, size=9.2, color=C2, weight='bold', z=4)
+    txt(bx+aw/2, ay+0.26, note, size=8.0, color=DIM, z=4)
+arr_h(4.65, 5.0, ay+ah/2)
+arr_h(8.95, 9.3, ay+ah/2)
 
-small_arrow_h(4.5, 4.95, ag_y + ag_h/2)
-small_arrow_h(8.85, 9.3, ag_y + ag_h/2)
+big_arrow(7, Y, Y - 1.0, '500 agent traces  +  llama3.1:8b baseline')
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Arrow 2 → 3
-# ─────────────────────────────────────────────────────────────────────────────
-big_arrow(7, P2Y, 7, P2Y - 1.05, '500 agent traces + llama3.1:8b baseline')
-
-# ─────────────────────────────────────────────────────────────────────────────
-# PHASE 3  (y=8.6 → 12.0)
-# ─────────────────────────────────────────────────────────────────────────────
-P3Y, P3H = 8.6, 3.4
-phase_frame(0.3, P3Y, 13.4, P3H, P3, 3,
-            'PHASE 3 — QLoRA Fine-Tuning  (Llama 3.1 8B · Unsloth · r=8)')
-
-for i, (name, d1, d2, d3, note) in enumerate([
-    ('tripmind-ft',         'SFT on 4,749 Phase 1 pairs',   'Colab T4 · fp16 · 3 epochs',      'loss 0.225 · 4.6 GB GGUF', 'plain SFT on synthetic pairs'),
-    ('tripmind-distill',    'KD on 449 Phase 2 traces',     'Lightning A100 · bf16 · 5 epochs', 'loss 0.254 · 4.6 GB GGUF', 'distilled from agent traces'),
-    ('tripmind-curriculum', '2-stage: Phase 1 → Phase 2',   'Lightning A100 · lr decay 4×',     'loss 0.241/0.505 · 4.6 GB GGUF', 'sequential domain → reasoning'),
-]):
-    bx = 0.5 + i * 4.45
-    inner_box(bx, P3Y + 0.18, 4.1, P3H - 0.78, P3, name, (d1, d2, d3, note))
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Arrow 3 → 4
-# ─────────────────────────────────────────────────────────────────────────────
-big_arrow(7, P3Y, 7, P3Y - 1.05, '3 fine-tuned models + baseline')
-
-# ─────────────────────────────────────────────────────────────────────────────
-# PHASE 4  (y=3.95 → 7.35)
-# ─────────────────────────────────────────────────────────────────────────────
-P4Y, P4H = 3.95, 3.4
-phase_frame(0.3, P4Y, 13.4, P4H, P4, 4,
-            'PHASE 4 — Evaluation & Red Teaming  (92 cases × 4 models × 10 metrics)')
-
-for i, (name, lines) in enumerate([
-    ('Automated Metrics',    ('JSON valid · savings · budget · schema',
-                              'ROUGE-L · BERTScore F1',
-                              'all-MiniLM-L6-v2 · runs locally',
-                              'no API cost')),
-    ('LLM-as-Judge',         ('DeepSeek V4 Flash judge',
-                              'reasoning coherence',
-                              'grounding accuracy',
-                              '1s rate limit + disk cache')),
-    ('Red Teaming · 45 cases', ('adversarial prompts',
-                                'budget overrides',
-                                'injection attempts',
-                                'constraint refusal scoring')),
-]):
-    bx = 0.5 + i * 4.45
-    inner_box(bx, P4Y + 0.18, 4.1, P4H - 0.78, P4, name, lines)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Arrow 4 → 5
-# ─────────────────────────────────────────────────────────────────────────────
-big_arrow(7, P4Y, 7, P4Y - 1.05, 'eval results + summary JSON')
-
-# ─────────────────────────────────────────────────────────────────────────────
-# PHASE 5  (y=0.4 → 2.7)
-# ─────────────────────────────────────────────────────────────────────────────
-P5Y, P5H = 0.4, 2.5
-phase_frame(0.3, P5Y, 13.4, P5H, P5, 5,
-            'PHASE 5 — FastAPI Inference Server  (async · Pydantic · Swagger /docs)')
-
-ep_data = [
-    ('GET /health',    ('Ollama + models', 'liveness check'), 2.1),
-    ('GET /models',    ('4 models + desc', 'registry listing'), 2.1),
-    ('POST /optimize', ('persona → itinerary', 'model registry validated'), 3.2),
-    ('GET /results/*', ('/summary · /compare', 'instant · no inference'), 2.6),
-    ('Swagger /docs',  ('auto-generated', ''), 1.9),
+# ═════════════════════════════════ PHASE 3 ═══════════════════════════════════
+Y, H = 8.65, 3.45
+phase(0.3, Y, 13.4, H, C3, 3, 'PHASE 3 — QLoRA Fine-Tuning   ·   Llama 3.1 8B · Unsloth · r = 8')
+models = [
+    (M_FT,   'tripmind-ft',         ('SFT · 4,749 Phase 1 pairs', 'Colab T4 · fp16 · 3 epochs',
+                                     'final loss 0.225', '4.6 GB GGUF Q4_K_M')),
+    (M_DIST, 'tripmind-distill',    ('KD · 449 Phase 2 traces', 'Lightning A100 · bf16 · 5 epochs',
+                                     'final loss 0.254', '4.6 GB GGUF Q4_K_M')),
+    (M_CURR, 'tripmind-curriculum', ('2-stage: Phase 1 → Phase 2', 'A100 · lr decay 4×',
+                                     'loss 0.241 / 0.505', '4.6 GB GGUF Q4_K_M')),
 ]
-ex = 0.5
-for name, lines, ew in ep_data:
-    is_main = 'optimize' in name
-    ec = P5
-    fc = '#1e3a5a' if is_main else SUBTLE_BG
-    lw = 2.5 if is_main else 1.5
-    rbox(ex, P5Y + 0.15, ew, P5H - 0.75, fc, ec, lw=lw, radius=0.18, zorder=3)
-    nc = '#7dd3fc' if is_main else P5
-    txt(ex + ew/2, P5Y + P5H - 0.95, name, size=10, color=nc, weight='bold', zorder=4)
-    for j, line in enumerate(lines):
-        if line:
-            txt(ex + ew/2, P5Y + P5H - 1.32 - j*0.30, line, size=8.5, color=DIM, zorder=4)
-    ex += ew + 0.35
+for i, (col, name, lines) in enumerate(models):
+    bx = 0.55 + i * 4.4
+    cell(bx, Y+0.22, 4.05, H-0.96, col, name, lines)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Save
-# ─────────────────────────────────────────────────────────────────────────────
+big_arrow(7, Y, Y - 1.0, '3 fine-tuned models  +  baseline')
+
+# ═════════════════════════════════ PHASE 4 ═══════════════════════════════════
+Y, H = 4.0, 3.45
+phase(0.3, Y, 13.4, H, C4, 4, 'PHASE 4 — Evaluation & Red Teaming   ·   92 cases × 4 models × 10 metrics')
+ev = [('Automated Metrics', ('JSON · savings · budget', 'schema · ROUGE-L · BERTScore',
+                             'all-MiniLM-L6-v2', 'runs locally · no API cost')),
+      ('LLM-as-Judge',      ('DeepSeek V4 Flash judge', 'reasoning coherence',
+                             'grounding accuracy', '1s rate-limit + disk cache')),
+      ('Red Teaming · 45',  ('adversarial prompts', 'budget overrides',
+                             'injection attempts', 'constraint-refusal scoring'))]
+for i, (name, lines) in enumerate(ev):
+    bx = 0.55 + i * 4.4
+    cell(bx, Y+0.22, 4.05, H-0.96, C4, name, lines)
+
+big_arrow(7, Y, Y - 1.0, 'eval results  +  summary JSON')
+
+# ═════════════════════════════════ PHASE 5 ═══════════════════════════════════
+Y, H = 0.4, 2.55
+phase(0.3, Y, 13.4, H, C5, 5, 'PHASE 5 — FastAPI Inference Server   ·   async · Pydantic · Swagger /docs')
+eps = [('GET /health',    ('Ollama + models', 'liveness check'), 2.15),
+       ('GET /models',    ('4 models + desc', 'registry listing'), 2.15),
+       ('POST /optimize', ('persona → itinerary', 'registry-validated'), 3.15),
+       ('GET /results/*', ('/summary · /compare', 'instant · cached'), 2.55),
+       ('Swagger /docs',  ('auto-generated', 'OpenAPI schema'), 2.0)]
+ex = 0.55
+for name, lines, w in eps:
+    main = 'optimize' in name
+    fc = INNER2 if main else INNER
+    lw = 2.4 if main else 1.5
+    tc = '#7dd3fc' if main else C5
+    cell(ex, Y+0.2, w, H-0.95, C5, name, lines, fc=fc, tcolor=tc, lw=lw)
+    ex += w + 0.32
+
+# ── Save ─────────────────────────────────────────────────────────────────────
 out = Path(__file__).parent / 'architecture.png'
-fig.savefig(out, dpi=150, bbox_inches='tight', facecolor=BG)
+fig.savefig(out, dpi=150, bbox_inches='tight', facecolor=BG, pad_inches=0.25)
 plt.close()
 print(f'Saved: {out}')
