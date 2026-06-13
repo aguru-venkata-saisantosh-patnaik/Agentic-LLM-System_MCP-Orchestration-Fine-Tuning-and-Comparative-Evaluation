@@ -43,7 +43,7 @@ Benchmark results across 10 metrics
 REST inference API (POST /optimize, GET /results/summary)
 ```
 
-![Architecture](docs/architecture.svg)
+![Architecture](docs/architecture.png)
 
 ---
 
