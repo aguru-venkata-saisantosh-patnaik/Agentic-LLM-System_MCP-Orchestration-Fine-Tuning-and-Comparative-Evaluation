@@ -189,11 +189,14 @@ def red_team():
     ax.set_xticks(x); ax.set_xticklabels(names, size=11)
     ax.set_ylim(0, 0.8); ax.set_yticks(np.arange(0, 0.81, 0.1))
     ax.set_ylabel('Pass rate', size=10.5)
-    ax.set_title('TripMind — Red-Team Pass Rates (45 adversarial cases)', size=14, pad=24)
     ax.grid(axis='y', alpha=0.3, zorder=0); ax.set_axisbelow(True)
-    fig.text(0.5, 0.92, 'Baseline not evaluated — 0% JSON validity makes structured-constraint '
+    # reserve headroom so the title and the note sit well clear of each other
+    fig.subplots_adjust(top=0.80)
+    fig.suptitle('TripMind — Red-Team Pass Rates (45 adversarial cases)', size=14,
+                 weight='bold', y=0.965)
+    fig.text(0.5, 0.875, 'Baseline not evaluated — 0% JSON validity makes structured-constraint '
              'safety metrics uninterpretable.', ha='center', size=8.8, color=DIM, style='italic')
-    fig.savefig(CHARTS / 'red_team_pass.png', dpi=150, bbox_inches='tight', facecolor=BG)
+    fig.savefig(CHARTS / 'red_team_pass.png', dpi=150, facecolor=BG)
     plt.close()
 
 if __name__ == '__main__':
