@@ -6,6 +6,8 @@ The project trains three Llama 3.1 8B LLMs via different supervision signals (SF
 
 **Total data cost: $8.** GPT-4o-mini produced 5,000 synthetic training pairs for $4. DeepSeek V4 Flash produced 500 multi-agent reasoning traces for $4. Equal spend, different data strategies — this makes the fine-tune vs. distill comparison methodologically sound.
 
+**White paper:** [whitepaper.pdf](whitepaper.pdf), archived on Zenodo at [10.5281/zenodo.21198884](https://doi.org/10.5281/zenodo.21198884).
+
 ---
 
 ## Skills Demonstrated
@@ -295,3 +297,15 @@ All GGUFs are Q4_K_M quantized (4.6 GB each) and run locally via Ollama — no G
 **Why MCP servers over direct API calls?** Standard protocol — the same 4 servers plug into Claude Desktop or Claude Code without modification. Purpose-built tools for each external service keeps agent prompts clean and tool results typed.
 
 **Why Ollama + GGUF?** Runs 8B parameter models on a MacBook Air 8 GB with no GPU. Makes the full pipeline reproducible without cloud infrastructure.
+
+---
+
+## Citation
+
+If you use this work, please cite:
+
+```
+Patnaik, A. V. S. (2026). Cost-Matched Data Generation for LLM Fine-Tuning: Comparing
+Supervised Fine-Tuning, Knowledge Distillation, and Curriculum Learning for an Agentic
+Travel-Planning System. Zenodo. https://doi.org/10.5281/zenodo.21198884
+```
